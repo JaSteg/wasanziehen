@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<title>Was anziehen?</title>
+<style>
+  /* Always dark */
+  :root {
+    color-scheme: dark;
+    --hue: 210;
+    --bg: hsl(var(--hue) 25% 7%);
+    --text: #f1f3f9;
+    --muted: #8b93a7;
+    --glass: rgb(255 255 255 / .06);
+    --glass-border: rgb(255 255 255 / .08);
+    --glass-strong: rgb(255 255 255 / .1);
+    --accent: hsl(var(--hue) 85% 56%);
+    --accent-2: hsl(calc(var(--hue) + 35) 85% 58%);
+    --accent-soft: hsl(var(--hue) 50% 22%);
+    --glow-1: hsl(var(--hue) 90% 45% / .35);
+    --glow-2: hsl(calc(var(--hue) + 45) 90% 45% / .25);
+    --shadow: none;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font: 500 16px/1.3 "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) 0 calc(28px + env(safe-area-inset-bottom));
+    transition: background .6s;
+  }
+  /* Soft colour blobs behind the glass, tinted by the felt temperature */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(520px 420px at 0% 0%, var(--glow-1), transparent 70%),
+      radial-gradient(480px 420px at 100% 30%, var(--glow-2), transparent 70%),
+      radial-gradient(520px 420px at 30% 100%, var(--glow-1), transparent 70%);
+    transition: background .6s;
+  }
+  main { max-width: 520px; margin: 0 auto; padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; overflow-x: hidden; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    backdrop-filter: blur(22px) saturate(1.5);
+    box-shadow: var(--shadow);
+  }
+  .on-accent {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff; border-color: transparent;
+    box-shadow: 0 6px 18px hsl(var(--hue) 85% 50% / .35);
+  }
+
+  /* Header */
+  .loc {
+    justify-self: start; display: flex; align-items: center; gap: 8px; max-width: 100%;
+    padding: 10px 16px 10px 12px; border-radius: 999px; font-size: 18px; font-weight: 800; letter-spacing: -.3px;
+  }
+  .loc span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loc .chev { color: var(--muted); font-size: 12px; }
+
+  /* Chip rows */
+  .row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 4px 16px 10px; }
+  .row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    min-width: 60px; padding: 10px 12px; border-radius: 20px; font-size: 11px; color: var(--muted); transition: .2s;
+  }
+  .chip b { font-size: 20px; line-height: 1; color: var(--text); font-weight: 800; }
+  .chip.on-accent b { color: #fff; }
+  .chip.on-accent { color: rgb(255 255 255 / .85); }
+
+  .times { justify-self: start; display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 14px; border-radius: 999px; color: var(--muted); margin-top: -6px; }
+  .times select {
+    appearance: none; -webkit-appearance: none; border: 0; background: none;
+    padding: 8px 10px; font-size: 16px; font-weight: 700; color: var(--text);
+  }
+
+  /* Sensitivity: segmented control */
+  .sens { display: flex; padding: 5px; border-radius: 22px; }
+  .sens button {
+    flex: 1; font-size: 26px; padding: 7px 0; border-radius: 17px;
+    filter: grayscale(.9); opacity: .45; transition: .2s;
+  }
+  .sens button.on { filter: none; opacity: 1; background: var(--glass-strong); box-shadow: 0 2px 10px rgb(0 0 0 / .08); transform: scale(1.04); }
+  .sens-cap { text-align: center; font-size: 12px; color: var(--muted); margin-top: -6px; }
+
+  /* Cards */
+  .card { border-radius: 28px; padding: 18px; }
+  .hero { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .hero .temp { font-size: 58px; font-weight: 800; letter-spacing: -3px; line-height: 1; }
+  .hero .felt {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+    padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); font-size: 13px; font-weight: 700;
+  }
+  .hero .big { font-size: 86px; line-height: 1; filter: drop-shadow(0 10px 18px hsl(var(--hue) 60% 30% / .25)); animation: float 5s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-6px); } }
+  .stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; }
+  .stat { border-radius: 18px; padding: 10px 6px; text-align: center; font-weight: 800; font-size: 15px; background: var(--glass-strong); }
+  .stat i { display: block; font-style: normal; font-size: 18px; margin-bottom: 2px; }
+  .stat small { font-weight: 500; color: var(--muted); font-size: 11px; }
+
+  .hours { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 12px; }
+  .hours::-webkit-scrollbar { display: none; }
+  .h { flex: none; width: 50px; text-align: center; font-size: 12px; color: var(--muted); display: grid; gap: 6px; padding: 10px 0; border-radius: 18px; }
+  .h:first-child { background: var(--glass-strong); }
+  .h .e { font-size: 22px; }
+  .h .t { color: var(--text); font-weight: 800; font-size: 15px; }
+  .h .p { color: hsl(215 90% 58%); font-size: 11px; font-weight: 700; min-height: 13px; }
+
+  .sec { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 8px 4px -2px; }
+  .sec .n { margin-left: auto; font-size: 11px; padding: 3px 9px; border-radius: 999px; background: var(--glass-strong); letter-spacing: 0; }
+
+  /* Bento grid: the first item gets a wide tile */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .item {
+    border-radius: 24px; padding: 14px 6px 12px; text-align: center; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; animation: pop .45s cubic-bezier(.2, .9, .3, 1.3) both;
+  }
+  .item .ic {
+    width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 38px; background: radial-gradient(circle at 50% 40%, var(--glass-strong), transparent 70%);
+  }
+  .item .ic svg { width: 40px; height: 40px; }
+  .item .lb { font-size: 12px; font-weight: 700; margin-top: 6px; }
+  .item.wide { grid-column: span 2; flex-direction: row; justify-content: flex-start; gap: 14px; padding: 14px 18px; text-align: left; }
+  .item.wide .ic { width: 76px; height: 76px; font-size: 50px; background: var(--accent-soft); }
+  .item.wide .ic svg { width: 52px; height: 52px; }
+  .item.wide .lb { font-size: 17px; font-weight: 800; margin: 0; }
+  .item.full { grid-column: 1 / -1; }
+  .item.maybe { opacity: .7; }
+  .item.maybe::after {
+    content: "?"; position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 800;
+    color: #fff; background: var(--accent); width: 20px; height: 20px; border-radius: 50%; line-height: 20px; text-align: center;
+  }
+  @keyframes pop { from { transform: translateY(10px) scale(.9); opacity: 0; } }
+
+  .msg { text-align: center; padding: 40px 10px; font-size: 44px; }
+  .msg small { display: block; font-size: 14px; color: var(--muted); margin-top: 8px; }
+  .msg button { margin-top: 14px; font-size: 15px; padding: 10px 20px; border-radius: 999px; }
+  .spin { display: inline-block; animation: spin 1.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Location sheet */
+  .sheet { position: fixed; inset: 0; background: rgb(0 0 0 / .25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: none; align-items: flex-start; z-index: 10; }
+  .sheet.open { display: flex; }
+  .sheet .panel {
+    background: var(--bg); width: 100%; max-width: 520px; margin: 0 auto;
+    padding: calc(16px + env(safe-area-inset-top)) 16px 16px; border-radius: 0 0 30px 30px; display: grid; gap: 10px;
+    animation: drop .25s ease-out;
+  }
+  @keyframes drop { from { transform: translateY(-30px); opacity: 0; } }
+  .search { display: flex; gap: 8px; }
+  .search input { flex: 1; min-width: 0; border-radius: 18px; padding: 13px 16px; font-size: 17px; outline: none; }
+  .search button { width: 48px; border-radius: 18px; font-size: 18px; }
+  .gps { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 18px; font-weight: 800; }
+  .res button { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 8px; text-align: left; border-radius: 16px; }
+  .res button:active { background: var(--glass); }
+  .res .fl { font-size: 24px; }
+  .res small { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+</style>
+</head>
+<body>
+<main>
+  <button class="loc glass" id="locBtn"><span>📍</span><span id="locName">…</span><span class="chev">▼</span></button>
+
+  <div class="row" id="days"></div>
+  <div class="row" id="presets" style="margin-top:-10px"></div>
+  <div class="times glass">🕗
+    <select id="from" aria-label="von"></select> →
+    <select id="to" aria-label="bis"></select>
+  </div>
+
+  <div class="sens glass" id="sens"></div>
+  <div class="sens-cap" id="sensCap"></div>
+
+  <div id="out" style="display:grid;gap:14px"></div>
+</main>
+
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="search">
+      <input class="glass" id="q" type="search" placeholder="🔎 Ort suchen" autocomplete="off" enterkeyhint="search">
+      <button class="glass" id="close" aria-label="Schließen">✕</button>
+    </div>
+    <button class="gps on-accent" id="gps">🎯 Mein Standort</button>
+    <div class="res" id="res"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+// ---------- State ----------
+const DEFAULT = { loc: null, day: 0, from: 8, to: 20, preset: 'day', sens: 2 };
+let state = { ...DEFAULT, ...load(), day: 0 };
+let wx = null; // { key, t, data }
+
+function load() { try { return JSON.parse(localStorage.getItem('wasanziehen')) || {}; } catch { return {}; } }
+function save() { try { localStorage.setItem('wasanziehen', JSON.stringify(state)); } catch {} }
+
+// ---------- Static UI ----------
+const PRESETS = [
+  { id: 'now',     ic: '⏱️', lb: 'Jetzt' },
+  { id: 'morning', ic: '🌅', lb: 'Morgens', from: 6,  to: 12 },
+  { id: 'noon',    ic: '☀️', lb: 'Mittags', from: 11, to: 17 },
+  { id: 'evening', ic: '🌙', lb: 'Abends',  from: 17, to: 24 },
+  { id: 'day',     ic: '🗓️', lb: 'Ganztags', from: 8, to: 20 },
+];
+const SENS = [
+  { ic: '🥶', lb: 'Friere schnell',  off: -5 },
+  { ic: '😬', lb: 'Eher verfroren',  off: -2.5 },
+  { ic: '🙂', lb: 'Normal',          off: 0 },
+  { ic: '😅', lb: 'Eher warm',       off: 2.5 },
+  { ic: '🥵', lb: 'Schwitze schnell', off: 5 },
+];
+
+for (let h = 0; h <= 24; h++) {
+  const o = `<option value="${h}">${String(h).padStart(2, '0')}:00</option>`;
+  if (h < 24) $('#from').insertAdjacentHTML('beforeend', o);
+  if (h > 0) $('#to').insertAdjacentHTML('beforeend', o);
+}
+
+$('#presets').innerHTML = PRESETS.map(p =>
+  `<button class="chip glass" data-p="${p.id}"><b>${p.ic}</b>${p.lb}</button>`).join('');
+$('#sens').innerHTML = SENS.map((s, i) =>
+  `<button data-s="${i}" aria-label="${s.lb}">${s.ic}</button>`).join('');
+
+$('#presets').onclick = e => {
+  const b = e.target.closest('[data-p]'); if (!b) return;
+  state.preset = b.dataset.p;
+  if (state.preset === 'now') state.day = 0;
+  applyPreset(); save(); render();
+};
+$('#sens').onclick = e => {
+  const b = e.target.closest('[data-s]'); if (!b) return;
+  state.sens = +b.dataset.s; save(); render();
+};
+$('#days').onclick = e => {
+  const b = e.target.closest('[data-d]'); if (!b) return;
+  state.day = +b.dataset.d;
+  if (state.preset === 'now' && state.day > 0) { state.preset = 'day'; applyPreset(); }
+  render();
+};
+$('#from').onchange = () => { state.from = +$('#from').value; if (state.to <= state.from) state.to = state.from + 1; state.preset = 'custom'; save(); render(); };
+$('#to').onchange = () => { state.to = +$('#to').value; if (state.from >= state.to) state.from = state.to - 1; state.preset = 'custom'; save(); render(); };
+
+function applyPreset() {
+  const p = PRESETS.find(p => p.id === state.preset);
+  if (!p) return;
+  if (p.id === 'now') {
+    const h = localNow().hour;
+    state.from = h; state.to = Math.min(24, h + 3);
+  } else { state.from = p.from; state.to = p.to; }
+}
+
+// ---------- Location ----------
+$('#locBtn').onclick = openSheet;
+$('#close').onclick = closeSheet;
+$('#sheet').onclick = e => { if (e.target.id === 'sheet') closeSheet(); };
+function openSheet() { $('#sheet').classList.add('open'); $('#gps').innerHTML = '🎯 Mein Standort'; $('#q').value = ''; $('#res').innerHTML = ''; setTimeout(() => $('#q').focus(), 50); }
+function closeSheet() { $('#sheet').classList.remove('open'); }
+
+let qTimer;
+$('#q').oninput = () => { clearTimeout(qTimer); qTimer = setTimeout(search, 300); };
+async function search() {
+  const q = $('#q').value.trim();
+  if (q.length < 2) { $('#res').innerHTML = ''; return; }
+  try {
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=de`).then(r => r.json());
+    const list = r.results || [];
+    $('#res').innerHTML = list.length ? list.map((p, i) =>
+      `<button data-i="${i}"><span class="fl">${flag(p.country_code)}</span><span>${esc(p.name)}<small>${esc([p.admin1, p.country].filter(Boolean).join(', '))}</small></span></button>`).join('')
+      : '<div class="msg">🤷</div>';
+    $('#res').onclick = e => {
+      const b = e.target.closest('[data-i]'); if (!b) return;
+      const p = list[+b.dataset.i];
+      setLoc({ name: p.name, lat: p.latitude, lon: p.longitude });
+    };
+  } catch { $('#res').innerHTML = '<div class="msg">📡❌</div>'; }
+}
+
+$('#gps').onclick = locate;
+function locate() {
+  if (!navigator.geolocation) return;
+  $('#gps').innerHTML = '<span class="spin">🎯</span> Mein Standort';
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    let name = 'Mein Standort';
+    try {
+      const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=de`).then(r => r.json());
+      name = r.city || r.locality || name;
+    } catch {}
+    $('#gps').innerHTML = '🎯 Mein Standort';
+    setLoc({ name, lat, lon });
+  }, () => {
+    $('#gps').innerHTML = '🎯 ❌';
+    if (!state.loc) setLoc({ name: 'Berlin', lat: 52.52, lon: 13.405 });
+  }, { timeout: 10000, maximumAge: 600000 });
+}
+
+function setLoc(loc) { state.loc = loc; wx = null; save(); closeSheet(); render(); }
+
+// ---------- Weather ----------
+async function getWeather() {
+  const { lat, lon } = state.loc;
+  const key = `${lat},${lon}`;
+  if (wx && wx.key === key && Date.now() - wx.t < 15 * 60e3) return wx.data;
+  const vars = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,snowfall,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,is_day';
+  const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars}&timezone=auto&forecast_days=7`);
+  if (!r.ok) throw new Error(r.status);
+  const data = await r.json();
+  wx = { key, t: Date.now(), data };
+  return data;
+}
+
+// Current date/hour at the selected location (uses the API's UTC offset when known)
+function localNow() {
+  const off = wx?.data?.utc_offset_seconds ?? -new Date().getTimezoneOffset() * 60;
+  const iso = new Date(Date.now() + off * 1000).toISOString();
+  return { date: iso.slice(0, 10), hour: +iso.slice(11, 13) };
+}
+
+function rowsFor(data, date, from, to, minHour) {
+  const H = data.hourly, rows = [];
+  H.time.forEach((t, i) => {
+    const h = +t.slice(11, 13);
+    if (t.slice(0, 10) !== date || h < from || h >= to || h < minHour) return;
+    rows.push({
+      h, temp: H.temperature_2m[i], app: H.apparent_temperature[i],
+      pp: H.precipitation_probability[i] ?? 0, pr: H.precipitation[i] ?? 0, snow: H.snowfall[i] ?? 0,
+      code: H.weather_code[i], wind: H.wind_speed_10m[i], gust: H.wind_gusts_10m[i] ?? H.wind_speed_10m[i],
+      uv: H.uv_index[i] ?? 0, day: !!H.is_day[i],
+    });
+  });
+  return rows;
+}
+
+function summarize(rows) {
+  const off = SENS[state.sens].off;
+  const max = k => Math.max(...rows.map(r => r[k]));
+  const min = k => Math.min(...rows.map(r => r[k]));
+  const sum = k => rows.reduce((a, r) => a + r[k], 0);
+  const worst = rows.reduce((a, r) => r.code > a.code ? r : a, rows[0]);
+  return {
+    tMin: min('temp'), tMax: max('temp'),
+    fMin: min('app') + off, fMax: max('app') + off,
+    pMax: max('pp'), pSum: sum('pr'), snow: sum('snow'),
+    gust: max('gust'), wind: max('wind'), uv: max('uv'),
+    code: worst.code, isDay: rows.some(r => r.day),
+    sunny: rows.some(r => r.day && r.code <= 2),
+  };
+}
+
+// ---------- Outfit logic ----------
+const BEANIE = `<svg viewBox="0 0 48 48"><circle cx="24" cy="8" r="5" fill="#f2f2f2" stroke="#c9c9c9"/><path d="M8 32c0-11 7-20 16-20s16 9 16 20z" fill="#e5484d"/><rect x="6" y="30" width="36" height="9" rx="4" fill="#b8323a"/><path d="M14 18v12M24 13v17M34 18v12" stroke="#c63a42" stroke-width="2"/></svg>`;
+
+function outfit(s) {
+  const wear = [], take = [];
+  const f = s.fMin, F = s.fMax;
+  const wet = s.pMax >= 50 || s.pSum >= 1;
+  const maybeWet = !wet && s.pMax >= 25;
+  const snow = s.snow >= 0.2;
+  const windy = s.gust >= 45;
+  const add = (list, ic, lb, maybe) => list.push({ ic, lb, maybe });
+
+  // Oberteil
+  if (f < -5)      { add(wear, '🧥', 'Dicke Jacke'); add(wear, '🧶', 'Pulli'); add(wear, '🧦', 'Thermo'); }
+  else if (f < 5)  { add(wear, '🧥', 'Winterjacke'); add(wear, '🧶', 'Pulli'); }
+  else if (f < 11) { add(wear, '🧥', 'Jacke'); add(wear, '🧶', 'Pulli'); }
+  else if (f < 16) { add(wear, '🧶', 'Pulli'); if (windy || wet) add(wear, '🧥', 'Leichte Jacke'); }
+  else if (f < 21) { add(wear, '👚', 'Langarm'); }
+  else if (F >= 28){ add(wear, '🎽', 'Top'); }
+  else             { add(wear, '👕', 'T-Shirt'); }
+
+  // Unten + Schuhe
+  if (f >= 19 && F >= 23) add(wear, '🩳', 'Kurze Hose');
+  else add(wear, '👖', 'Lange Hose');
+
+  if (snow) add(wear, '🥾', 'Stiefel');
+  else if (wet) add(wear, '🥾', 'Wasserfest');
+  else if (F >= 26 && s.pMax < 25) add(wear, '🩴', 'Sandalen');
+  else add(wear, '👟', 'Sneaker');
+
+  // Kälte-Accessoires
+  if (f < 5) add(wear, BEANIE, 'Mütze');
+  if (f < 4) add(wear, '🧣', 'Schal');
+  if (f < 2) add(wear, '🧤', 'Handschuhe');
+
+  // Mitnehmen
+  if (wet && windy)      add(take, '🌧️', 'Regenjacke');
+  else if (wet)          add(take, '☂️', 'Schirm');
+  else if (maybeWet)     add(take, '☂️', 'Knirps', true);
+  if (F - f >= 8 && f < 20) add(take, '🧅', 'Zwiebellook');
+  if (windy && f < 15)   add(take, '💨', 'Winddicht');
+  if (s.sunny && s.uv >= 3) add(take, '🕶️', 'Sonnenbrille');
+  if (s.uv >= 5)         add(take, '🧴', 'Sonnencreme');
+  if (s.sunny && (s.uv >= 6 || F >= 27)) add(take, '🧢', 'Kappe');
+  if (F >= 26)           add(take, '💧', 'Wasser');
+  if (!take.length)      add(take, '👌', 'Nichts extra');
+
+  return { wear, take };
+}
+
+function wIcon(code, day = true) {
+  if (code <= 1) return day ? (code ? '🌤️' : '☀️') : '🌙';
+  if (code === 2) return day ? '⛅' : '☁️';
+  if (code === 3) return '☁️';
+  if (code <= 48) return '🌫️';
+  if (code <= 57) return '🌦️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '🌨️';
+  if (code <= 82) return '🌦️';
+  if (code <= 86) return '🌨️';
+  return '⛈️';
+}
+
+// ---------- Render ----------
+const r0 = n => Math.round(n);
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const range = (a, b) => r0(a) === r0(b) ? `${r0(a)}°` : `${r0(a)}–${r0(b)}°`;
+
+async function render() {
+  // Static controls
+  $('#locName').textContent = state.loc ? state.loc.name : '…';
+  document.querySelectorAll('#presets .chip').forEach(b => b.classList.toggle('on-accent', b.dataset.p === state.preset));
+  document.querySelectorAll('#sens button').forEach(b => b.classList.toggle('on', +b.dataset.s === state.sens));
+  $('#sensCap').textContent = SENS[state.sens].lb;
+  $('#from').value = state.from; $('#to').value = state.to;
+
+  if (!state.loc) { $('#out').innerHTML = `<div class="msg"><span class="spin">🎯</span></div>`; return; }
+  if (!wx) $('#out').innerHTML = `<div class="msg"><span class="spin">🌀</span></div>`;
+
+  let data;
+  try { data = await getWeather(); }
+  catch {
+    $('#out').innerHTML = `<div class="msg">📡❌<br><button class="on-accent" id="retry">↻</button></div>`;
+    $('#retry').onclick = () => { wx = null; render(); };
+    return;
+  }
+
+  const now = localNow();
+  const dates = [...new Set(data.hourly.time.map(t => t.slice(0, 10)))].slice(0, 7);
+  $('#days').innerHTML = dates.map((d, i) => {
+    const dt = new Date(d + 'T12:00');
+    const lb = i === 0 ? 'Heute' : i === 1 ? 'Morgen' : WD[dt.getDay()];
+    return `<button class="chip glass ${i === state.day ? 'on-accent' : ''}" data-d="${i}"><b>${dt.getDate()}</b>${lb}</button>`;
+  }).join('');
+
+  const date = dates[state.day];
+  const rows = rowsFor(data, date, state.from, state.to, date === now.date ? now.hour : 0);
+  if (!rows.length) {
+    $('#out').innerHTML = `<div class="msg">⏰<small>Zeitraum vorbei</small></div>`;
+    return;
+  }
+
+  const s = summarize(rows);
+  const o = outfit(s);
+  // Accent colour follows the felt temperature: cold = blue, warm = orange
+  const fm = (s.fMin + s.fMax) / 2;
+  const hue = fm < 16 ? Math.min(230, 222 - fm * 2) : Math.max(12, 45 - (fm - 16) * 2.5);
+  document.documentElement.style.setProperty('--hue', r0(hue));
+
+  // Widen tiles so every row of the 3-column bento grid is full
+  const wideAt = n => n === 1 ? [0] : n % 3 === 2 ? [0] : n % 3 === 1 ? [0, 2] : [];
+  const items = (list, base = 0) => list.map((it, i) =>
+    `<div class="item glass ${it.maybe ? 'maybe' : ''} ${wideAt(list.length).includes(i) ? 'wide' : ''} ${list.length === 1 ? 'full' : ''}" style="animation-delay:${(base + i) * 45}ms"><div class="ic">${it.ic}</div><div class="lb">${it.lb}</div></div>`).join('');
+
+  $('#out').innerHTML = `
+    <div class="card hero glass">
+      <div>
+        <div class="temp">${range(s.tMin, s.tMax)}</div>
+        <div class="felt">🧍 gefühlt ${range(s.fMin, s.fMax)}</div>
+      </div>
+      <div class="big">${wIcon(s.code, s.isDay)}</div>
+      <div class="stats">
+        <div class="stat"><i>💧</i>${r0(s.pMax)}%</div>
+        <div class="stat"><i>💨</i>${r0(s.gust)}<small> km/h</small></div>
+        <div class="stat"><i>🔆</i>UV ${r0(s.uv)}</div>
+      </div>
+    </div>
+    <div class="card hours glass">${rows.map(r => `
+      <div class="h"><span>${String(r.h).padStart(2, '0')}</span><span class="e">${wIcon(r.code, r.day)}</span>
+      <span class="t">${r0(r.temp)}°</span><span class="p">${r.pp >= 20 ? r.pp + '%' : ''}</span></div>`).join('')}
+    </div>
+    <div class="sec">👤 Anziehen <span class="n">${o.wear.length}</span></div>
+    <div class="grid">${items(o.wear)}</div>
+    <div class="sec">🎒 Mitnehmen <span class="n">${o.take.length}</span></div>
+    <div class="grid">${items(o.take, o.wear.length)}</div>`;
+}
+
+// ---------- Helpers ----------
+function flag(cc) { return cc ? [...cc.toUpperCase()].map(c => String.fromCodePoint(127397 + c.charCodeAt(0))).join('') : '🌍'; }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+
+// ---------- Start ----------
+if (state.preset === 'now') applyPreset();
+render();
+if (!state.loc) locate();
+setInterval(() => { wx = null; render(); }, 30 * 60e3);
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
